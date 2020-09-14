@@ -1,12 +1,11 @@
-from flask import Flask,g
+from flask import Flask
 from flask import request, jsonify
 import json,os,string
-import string
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 
-#path = ".\\intents.JSON"
+
 #Import the file with my swahii keyword
 with open('intents.JSON' ,'r') as file1:
     key_data = json.load(file1)
@@ -22,21 +21,26 @@ def remove_mystopwords(sentence):
     tokens_filtered= [word for word in tokens if not word in stopword_data]
     return (" ").join(tokens_filtered)
 
-#Instatiat a route
+#Instatiate an app for my chatbot
 
 app = Flask(__name__)
 
 @app.route("/", methods = ["POST","GET"])
 def ask():
   
-    question  = request.get_json()["question"].lower()                                                          #Get user's input
+    question  = request.get_json()["question"].lower()                                               #Get user's input
     filtered_text = remove_mystopwords(question)                                                     #Remove stopwords from the user's input
-    after_puctuation = filtered_text.translate(str.maketrans('', '', string.punctuation))                #Remove puctuation marks
-    final_ans = bot_responses(after_puctuation)
-    test_ = key_data[final_ans]
-    return test_
+    after_puctuation = filtered_text.translate(str.maketrans('', '', string.punctuation)).strip()    #Remove puctuation marks
+    final_ans = bot_responses(after_puctuation)                                                      # call a fxn to find similarity of the user input 
+    if final_ans== "Sijakuelewa":                                                                    #Returned if word doesnt match any
+        return "Samahani, sijakuelewa. Naomba uliza tena"
+    else:                                                                                            #if match found, return its value
+        test_ = key_data[final_ans]
+        return test_
 
 #########################################################
+
+#Function to sort the index from similarity scores list
 def index_sort(list_var):
     length = len(list_var)
     list_index = list(range(0,length))
@@ -51,7 +55,7 @@ def index_sort(list_var):
                 list_index[j] = temp
                 
     return list_index
-
+#A fuction to vectorize user input and find the best match answer  from key_data database
 def bot_responses(val):
     user_input = val
     sentence_list = keys_data
@@ -80,8 +84,8 @@ def bot_responses(val):
             
         if j > 2:
             break
-    if response_flag == 0:      #didi not find similar sentence
-        bot_response = "Sijaelewa"
+    if response_flag == 0:      #did not find similar sentence
+        bot_response = "Sijakuelewa"
 
     sentence_list.remove(user_input)
 
